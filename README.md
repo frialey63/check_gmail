@@ -1,2 +1,3 @@
 # check_gmail
 A simple GMail Checker for Linux
+Because I cannot find any other mail checker which works for GNome3 on Ubuntu 14.04 with Docky, I have tried a few...
