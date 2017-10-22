@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# crontab
+# */5 * * * * /home/paul/bin/check_gmail.bsh
+
+export DISPLAY=:0.0
+export XDG_RUNTIME_DIR=/run/user/1000
+
+# https://askubuntu.com/questions/298608/notify-send-doesnt-work-from-crontab/346580#346580
+eval "export $(egrep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pgrep -u $LOGNAME gnome-session)/environ)";
+
+#
+#tmpres=`gnome-screensaver-command -q | grep inactive`
+#echo "[$tmpres]" >> /tmp/check_gmail.log
+#
+#if [[ -z $tmpres ]];
+#then
+#    echo "`date` screensaver active" >> /tmp/check_gmail.log
+#    exit 0
+#fi
+
+last_mail_check=/tmp/last_mail_check.tmp
+mail_check=/tmp/mail_check.tmp
+
+mail_sound=/usr/share/sounds/gnome/default/alerts/sonar.ogg
+mail_icon=/usr/share/icons/gnome/48x48/status/mail-unread.png
+
+username="paul.parlett@gmail.com"
+password="Guf@UFF[cLM?we=>"
+atom_titles=`curl -u $username:$password --silent "https://mail.google.com/mail/feed/atom" |  grep -oPm1 "(?<=<title>)[^<]+" | sed '1d'`
+
+if [[ -z $atom_titles ]]; then
+    echo "no mail"
+else
+    echo $atom_titles > $mail_check
+
+    if [[ ! -f $last_mail_check ]]; then
+        touch $last_mail_check
+    fi
+
+    if [[ `diff --brief $mail_check $last_mail_check` ]]; then
+	echo "new mail"
+        paplay /usr/share/sounds/gnome/default/alerts/sonar.ogg
+	notify-send -i $mail_icon "New GMail Message(s)" "$atom_titles"
+    else
+	echo "existing mail"
+    fi
+fi
+
+echo $atom_titles > $last_mail_check
+
